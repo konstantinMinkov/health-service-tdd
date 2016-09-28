@@ -19,7 +19,4 @@ public class ClassForTestTest {
         healthService = new HealthService();
     }
 
-    @Test
-    public
-
 }
