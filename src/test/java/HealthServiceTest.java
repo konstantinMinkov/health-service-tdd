@@ -90,37 +90,38 @@ public class HealthServiceTest {
     }
 
     @Test
-    @Ignore
     public void weekWalkingStatistics() {
-        final int delta = 100;
         final int daysInWeek = 7;
         final int middleDayOfWeek = 4;
-        List<Double> weekStatistics = new ArrayList<>(daysInWeek);
-        Random random = new Random();
-        LocalDateTime now = LocalDateTime.now();
-        for (int i = 0; i < daysInWeek; i++) {
-            final int todayWalkingTime = random.nextInt(WALKING_MINUTES_DAY_NORM * 2);
-            healthService.walk(now.plusDays(i), todayWalkingTime);
-            weekStatistics.add(healthService.dayWalkingPercentageLeft(now.plusDays(i).toLocalDate()));
-        }
-        assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
-                is(healthService.dayDrinkingPercentageLeft(now.plusDays(middleDayOfWeek).toLocalDate())));
-    }
-
-    @Test
-    public void weekDrinkingStatistics() {
-        final int delta = 100;
-        final int daysInWeek = 7;
-        final int middleDayOfWeek = 4;
+        final int hundredPercent = 1;
         List<Double> weekStatistics = new ArrayList<>(daysInWeek);
         Random random = new Random();
         LocalDateTime now = LocalDateTime.now();
         for (int i = 1; i <= daysInWeek; i++) {
-            final int todayDrinkingTime = random.nextInt(WALKING_MINUTES_DAY_NORM * 2);
-            healthService.drink(now.plusDays(i), todayDrinkingTime);
-            weekStatistics.add(1 - healthService.dayDrinkingPercentageLeft(now.plusDays(i).toLocalDate()));
+            final int todayWalkingMinutes = random.nextInt(WALKING_MINUTES_DAY_NORM * 2);
+            healthService.walk(now.plusDays(i), todayWalkingMinutes);
+            weekStatistics.add(hundredPercent
+                    - healthService.dayWalkingPercentageLeft(now.plusDays(i).toLocalDate()));
         }
-        System.out.println("----");
+        weekStatistics.sort(Comparator.naturalOrder());
+        assertThat(healthService.lastWeekWalkingPercentage(now.plusWeeks(1).toLocalDate()),
+                is(weekStatistics.get(middleDayOfWeek)));
+    }
+
+    @Test
+    public void weekDrinkingStatistics() {
+        final int daysInWeek = 7;
+        final int middleDayOfWeek = 4;
+        final int hundredPercent = 1;
+        List<Double> weekStatistics = new ArrayList<>(daysInWeek);
+        Random random = new Random();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 1; i <= daysInWeek; i++) {
+            final int todayDrinkingTime = random.nextInt(WATER_DAY_NORM * 2);
+            healthService.drink(now.plusDays(i), todayDrinkingTime);
+            weekStatistics.add(hundredPercent
+                    - healthService.dayDrinkingPercentageLeft(now.plusDays(i).toLocalDate()));
+        }
         weekStatistics.sort(Comparator.naturalOrder());
         assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
                 is(weekStatistics.get(middleDayOfWeek)));
