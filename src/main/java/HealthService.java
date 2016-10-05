@@ -1,70 +1,85 @@
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class HealthService {
 
-    private final double WATER_DAY_NORM;
+    private final int WATER_DAY_NORM;
     private final int CALORIES_DAY_NORM;
     private final int WALKING_MINUTES_DAY_NORM;
-    private Map<LocalDate, Optional<Double>> waterAmountDrunk;
-    private Map<LocalDate, Optional<Integer>> caloriesAmountAte;
-    private Map<LocalDate, Optional<Integer>> minutesWalked;
+    private Map<LocalDate, Integer> waterDrunkEachDay;
+    private Map<LocalDate, Integer> caloriesEatenEachDay;
+    private Map<LocalDate, Integer> minutesWalkedEachDay;
 
-    public HealthService(double waterDayNorm, int caloriesDayNorm,
+    public HealthService(int waterDayNorm, int caloriesDayNorm,
                          int walkingMinutesDayNorm) {
         WATER_DAY_NORM = waterDayNorm;
         CALORIES_DAY_NORM = caloriesDayNorm;
         WALKING_MINUTES_DAY_NORM = walkingMinutesDayNorm;
-        caloriesAmountAte = new HashMap<>();
-        waterAmountDrunk = new HashMap<>();
-        minutesWalked = new HashMap<>();
+        caloriesEatenEachDay = new HashMap<>();
+        waterDrunkEachDay = new HashMap<>();
+        minutesWalkedEachDay = new HashMap<>();
     }
 
     public void eat(LocalDateTime dateTime, int calories) {
-        int totalCalories = calories;
         final LocalDate date = dateTime.toLocalDate();
-        if (caloriesAmountAte.containsKey(date)) {
-            totalCalories += caloriesAmountAte.get(date).orElse(0);
+        caloriesEatenEachDay.merge(date, calories, Integer::sum);
+    }
+
+    public void drink(LocalDateTime dateTime, int waterDrunk) {
+        final LocalDate date = dateTime.toLocalDate();
+        waterDrunkEachDay.merge(date, waterDrunk, Integer::sum);
+    }
+
+    public void walk(LocalDateTime dateTime, int minutesWalked) {
+        final LocalDate date = dateTime.toLocalDate();
+        minutesWalkedEachDay.merge(date, minutesWalked, Integer::sum);
+    }
+
+    public int waterLeftToDrink(LocalDate date) {
+        final Integer waterDrunkThatDay = waterDrunkEachDay.get(date);
+        int waterLeft = WATER_DAY_NORM
+                - Optional.ofNullable(waterDrunkThatDay)
+                .orElse(0);
+        return (waterLeft > 0) ? waterLeft : 0;
+    }
+
+    public int caloriesLeftToEat(LocalDate date) {
+        int caloriesLeft = CALORIES_DAY_NORM
+                - Optional.ofNullable(caloriesEatenEachDay.get(date))
+                .orElse(0);
+        return caloriesLeft > 0 ? caloriesLeft : 0;
+    }
+
+    public int minutesLeftToWalk(LocalDate date) {
+        int minutesLeft = WALKING_MINUTES_DAY_NORM
+                - Optional.ofNullable(minutesWalkedEachDay.get(date))
+                .orElse(0);
+        return minutesLeft > 0 ? minutesLeft : 0;
+    }
+
+    public double dayWalkingPercentageLeft(LocalDate date) {
+        return (double) minutesLeftToWalk(date) / WALKING_MINUTES_DAY_NORM;
+    }
+
+    public double dayEatingPercentageLeft(LocalDate date) {
+        return (double) caloriesLeftToEat(date) / CALORIES_DAY_NORM;
+    }
+
+    public double dayDrinkingPercentageLeft(LocalDate date) {
+        return (double) waterLeftToDrink(date) / WATER_DAY_NORM;
+    }
+
+    public double lastWeekDrinkingPercentage(LocalDate date) {
+        final int middleOfWeek = 4;
+        final int hundredPercents = 1;
+        LocalDate dateWeekAgo = date.minusWeeks(1);
+        List<Double> weekDrinkingPercentage = new ArrayList<>();
+        while (dateWeekAgo.isBefore(date)) {
+            weekDrinkingPercentage.add(hundredPercents - dayDrinkingPercentageLeft(date));
+            date = date.minusDays(1);
         }
-        caloriesAmountAte.put(date, Optional.ofNullable(totalCalories));
+        weekDrinkingPercentage.sort(Comparator.naturalOrder());
+        return weekDrinkingPercentage.get(middleOfWeek);
     }
-
-    public void drink(LocalDateTime dateTime, double amount) {
-        double totalAmount = amount;
-        final LocalDate date = dateTime.toLocalDate();
-        if (waterAmountDrunk.containsKey(date)) {
-            totalAmount += waterAmountDrunk.get(date).orElse(.0);
-        }
-        waterAmountDrunk.put(date, Optional.ofNullable(totalAmount));
-    }
-
-    public void walk(LocalDateTime dateTime, int minutesToWalk) {
-        int totalMinutes = minutesToWalk;
-        final LocalDate date = dateTime.toLocalDate();
-        if (minutesWalked.containsKey(date)) {
-            totalMinutes += minutesWalked.get(date).orElse(0);
-        }
-        minutesWalked.put(date, Optional.ofNullable(totalMinutes));
-    }
-
-    public double waterLeftToDrink(LocalDateTime dateTime) {
-        final LocalDate date = dateTime.toLocalDate();
-        return WATER_DAY_NORM - waterAmountDrunk.get(date).orElse(.0);
-    }
-
-    public int caloriesLeftToEat(LocalDateTime dateTime) {
-        final LocalDate date = dateTime.toLocalDate();
-        return CALORIES_DAY_NORM - caloriesAmountAte.get(date).orElse(0);
-    }
-
-    public int minutesLeftToWalk(LocalDateTime dateTime) {
-        final LocalDate date = dateTime.toLocalDate();
-        return WALKING_MINUTES_DAY_NORM - minutesWalked.get(date).orElse(0);
-    }
-
-
 }

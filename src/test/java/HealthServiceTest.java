@@ -1,7 +1,13 @@
-import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Random;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -10,37 +16,113 @@ import static org.junit.Assert.assertThat;
 public class HealthServiceTest {
 
     private static HealthService healthService;
-    private static final double WATER_DAY_NORM = 2.5;
+    private static final int WATER_DAY_NORM = 2500;
     private static final int CALORIES_DAY_NORM = 2200;
     private static final int WALKING_MINUTES_DAY_NORM = 120;
 
-    @BeforeClass
-    public static void before() throws Exception {
+    private int leftToDrink(int waterDrunk) {
+        int waterLeft = WATER_DAY_NORM - waterDrunk;
+        return waterLeft > 0 ? waterLeft : 0;
+    }
+
+    private int leftToEat(int eatenCalories) {
+        int caloriesLeft = CALORIES_DAY_NORM - eatenCalories;
+        return caloriesLeft > 0 ? caloriesLeft : 0;
+    }
+
+    private int leftToWalk(int minutesWalked) {
+        int minutesLeft = WALKING_MINUTES_DAY_NORM - minutesWalked;
+        return minutesLeft > 0 ? minutesLeft : 0;
+    }
+
+    @Before
+    public void before() throws Exception {
         healthService = new HealthService(WATER_DAY_NORM, CALORIES_DAY_NORM,
                 WALKING_MINUTES_DAY_NORM);
     }
 
     @Test
     public void drinkTest() throws Exception {
-        double drunkAmount = .200;
-        double waterLeft = WATER_DAY_NORM - drunkAmount;
-        healthService.drink(LocalDateTime.now(), drunkAmount);
-        assertThat(healthService.waterLeftToDrink(LocalDateTime.now()), is(waterLeft));
+        int waterDrunk = 200;
+        healthService.drink(LocalDateTime.now(), waterDrunk);
+        assertThat(healthService.waterLeftToDrink(LocalDate.now()),
+                is(leftToDrink(waterDrunk)));
     }
 
     @Test
     public void eatTest() throws Exception {
-        int caloriesAmount = 500;
-        int caloriesLeft = CALORIES_DAY_NORM - caloriesAmount;
-        healthService.eat(LocalDateTime.now(), caloriesAmount);
-        assertThat(healthService.caloriesLeftToEat(LocalDateTime.now()), is(caloriesLeft));
+        int caloriesEaten = 500;
+        healthService.eat(LocalDateTime.now(), caloriesEaten);
+        assertThat(healthService.caloriesLeftToEat(LocalDate.now()),
+                is(leftToEat(caloriesEaten)));
     }
 
     @Test
     public void walkTest() throws Exception {
         int minutesWalked = 20;
-        int minutesToWalk = WALKING_MINUTES_DAY_NORM - minutesWalked;
         healthService.walk(LocalDateTime.now(), minutesWalked);
-        assertThat(healthService.minutesLeftToWalk(LocalDateTime.now()), is(minutesToWalk));
+        assertThat(healthService.minutesLeftToWalk(LocalDate.now()),
+                is(leftToWalk(minutesWalked)));
+    }
+
+    @Test
+    public void dayWalkingStatistics() {
+        int minutesWalked = 2600;
+        healthService.walk(LocalDateTime.now(), minutesWalked);
+        assertThat(healthService.dayWalkingPercentageLeft(LocalDate.now()),
+                is((double) leftToWalk(minutesWalked) / WALKING_MINUTES_DAY_NORM));
+    }
+
+    @Test
+    public void dayCaloriesEatenStatistics() {
+        int caloriesEaten = 500;
+        healthService.eat(LocalDateTime.now(), caloriesEaten);
+        assertThat(healthService.dayEatingPercentageLeft(LocalDate.now()),
+                is((double) leftToEat(caloriesEaten) / CALORIES_DAY_NORM));
+    }
+
+    @Test
+    public void dayWaterDrunkStatistics() {
+        int waterDrunk = 200;
+        healthService.drink(LocalDateTime.now(), waterDrunk);
+        assertThat(healthService.dayDrinkingPercentageLeft(LocalDate.now()),
+                is((double) leftToDrink(waterDrunk) / WATER_DAY_NORM));
+    }
+
+    @Test
+    @Ignore
+    public void weekWalkingStatistics() {
+        final int delta = 100;
+        final int daysInWeek = 7;
+        final int middleDayOfWeek = 4;
+        List<Double> weekStatistics = new ArrayList<>(daysInWeek);
+        Random random = new Random();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < daysInWeek; i++) {
+            final int todayWalkingTime = random.nextInt(WALKING_MINUTES_DAY_NORM * 2);
+            healthService.walk(now.plusDays(i), todayWalkingTime);
+            weekStatistics.add(healthService.dayWalkingPercentageLeft(now.plusDays(i).toLocalDate()));
+        }
+        assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
+                is(healthService.dayDrinkingPercentageLeft(now.plusDays(middleDayOfWeek).toLocalDate())));
+    }
+
+    @Test
+    public void weekDrinkingStatistics() {
+        final int delta = 100;
+        final int daysInWeek = 7;
+        final int middleDayOfWeek = 4;
+        List<Double> weekStatistics = new ArrayList<>(daysInWeek);
+        Random random = new Random();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 1; i <= daysInWeek; i++) {
+            final int todayDrinkingTime = random.nextInt(WALKING_MINUTES_DAY_NORM * 2);
+            healthService.drink(now.plusDays(i), todayDrinkingTime);
+            weekStatistics.add(1 - healthService.dayDrinkingPercentageLeft(now.plusDays(i).toLocalDate()));
+        }
+        System.out.println("----");
+        weekStatistics.sort(Comparator.naturalOrder());
+        assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
+                is(weekStatistics.get(middleDayOfWeek)));
     }
 }
