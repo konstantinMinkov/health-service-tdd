@@ -126,4 +126,23 @@ public class HealthServiceTest {
         assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
                 is(weekStatistics.get(middleDayOfWeek)));
     }
+
+    @Test
+    public void weekEatingStatistics() {
+        final int daysInWeek = 7;
+        final int middleDayOfWeek = 4;
+        final int hundredPercent = 1;
+        List<Double> weekStatistics = new ArrayList<>(daysInWeek);
+        Random random = new Random();
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 1; i <= daysInWeek; i++) {
+            final int todayAteCalories = random.nextInt(WATER_DAY_NORM * 2);
+            healthService.drink(now.plusDays(i), todayAteCalories);
+            weekStatistics.add(hundredPercent
+                    - healthService.dayEatingPercentageLeft(now.plusDays(i).toLocalDate()));
+        }
+        weekStatistics.sort(Comparator.naturalOrder());
+        assertThat(healthService.lastWeekEatingPercentage(now.plusWeeks(1).toLocalDate()),
+                is(weekStatistics.get(middleDayOfWeek)));
+    }
 }
