@@ -82,4 +82,17 @@ public class HealthService {
         weekDrinkingPercentage.sort(Comparator.naturalOrder());
         return weekDrinkingPercentage.get(middleOfWeek);
     }
+
+    public double lastWeekWalkingPercentage(LocalDate date) {
+        final int middleOfWeek = 4;
+        final int hundredPercents = 1;
+        LocalDate dateWeekAgo = date.minusWeeks(1);
+        List<Double> weekWalkingPercentage = new ArrayList<>();
+        while (dateWeekAgo.isBefore(date)) {
+            weekWalkingPercentage.add(hundredPercents - dayWalkingPercentageLeft(date));
+            date = date.minusDays(1);
+        }
+        weekWalkingPercentage.sort(Comparator.naturalOrder());
+        return weekWalkingPercentage.get(middleOfWeek);
+    }
 }
