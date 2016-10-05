@@ -1,5 +1,4 @@
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -90,7 +89,7 @@ public class HealthServiceTest {
     }
 
     @Test
-    public void weekWalkingStatistics() {
+    public void weekWalkingMedian() {
         final int daysInWeek = 7;
         final int middleDayOfWeek = 4;
         final int hundredPercent = 1;
@@ -104,12 +103,12 @@ public class HealthServiceTest {
                     - healthService.dayWalkingPercentageLeft(now.plusDays(i).toLocalDate()));
         }
         weekStatistics.sort(Comparator.naturalOrder());
-        assertThat(healthService.lastWeekWalkingPercentage(now.plusWeeks(1).toLocalDate()),
+        assertThat(healthService.lastWeekWalkingMedian(now.plusWeeks(1).toLocalDate()),
                 is(weekStatistics.get(middleDayOfWeek)));
     }
 
     @Test
-    public void weekDrinkingStatistics() {
+    public void weekDrinkingMedian() {
         final int daysInWeek = 7;
         final int middleDayOfWeek = 4;
         final int hundredPercent = 1;
@@ -123,12 +122,12 @@ public class HealthServiceTest {
                     - healthService.dayDrinkingPercentageLeft(now.plusDays(i).toLocalDate()));
         }
         weekStatistics.sort(Comparator.naturalOrder());
-        assertThat(healthService.lastWeekDrinkingPercentage(now.plusWeeks(1).toLocalDate()),
+        assertThat(healthService.lastWeekDrinkingMedian(now.plusWeeks(1).toLocalDate()),
                 is(weekStatistics.get(middleDayOfWeek)));
     }
 
     @Test
-    public void weekEatingStatistics() {
+    public void weekEatingMedian() {
         final int daysInWeek = 7;
         final int middleDayOfWeek = 4;
         final int hundredPercent = 1;
@@ -136,13 +135,13 @@ public class HealthServiceTest {
         Random random = new Random();
         LocalDateTime now = LocalDateTime.now();
         for (int i = 1; i <= daysInWeek; i++) {
-            final int todayAteCalories = random.nextInt(WATER_DAY_NORM * 2);
+            final int todayAteCalories = random.nextInt(CALORIES_DAY_NORM * 2);
             healthService.drink(now.plusDays(i), todayAteCalories);
             weekStatistics.add(hundredPercent
                     - healthService.dayEatingPercentageLeft(now.plusDays(i).toLocalDate()));
         }
         weekStatistics.sort(Comparator.naturalOrder());
-        assertThat(healthService.lastWeekEatingPercentage(now.plusWeeks(1).toLocalDate()),
+        assertThat(healthService.lastWeekEatingMedian(now.plusWeeks(1).toLocalDate()),
                 is(weekStatistics.get(middleDayOfWeek)));
     }
 }

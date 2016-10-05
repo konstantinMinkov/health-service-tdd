@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 
 public class HealthService {
 
@@ -70,42 +71,28 @@ public class HealthService {
         return (double) waterLeftToDrink(date) / WATER_DAY_NORM;
     }
 
-    public double lastWeekDrinkingPercentage(LocalDate date) {
-        final int middleOfWeek = 4;
-        final int hundredPercents = 1;
-        LocalDate dateWeekAgo = date.minusWeeks(1);
-        List<Double> weekDrinkingPercentage = new ArrayList<>();
-        while (dateWeekAgo.isBefore(date)) {
-            weekDrinkingPercentage.add(hundredPercents - dayDrinkingPercentageLeft(date));
-            date = date.minusDays(1);
-        }
-        weekDrinkingPercentage.sort(Comparator.naturalOrder());
-        return weekDrinkingPercentage.get(middleOfWeek);
+    public double lastWeekDrinkingMedian(LocalDate date) {
+        return lastWeekMedian(date, this::dayDrinkingPercentageLeft);
     }
 
-    public double lastWeekWalkingPercentage(LocalDate date) {
-        final int middleOfWeek = 4;
-        final int hundredPercents = 1;
-        LocalDate dateWeekAgo = date.minusWeeks(1);
-        List<Double> weekWalkingPercentage = new ArrayList<>();
-        while (dateWeekAgo.isBefore(date)) {
-            weekWalkingPercentage.add(hundredPercents - dayWalkingPercentageLeft(date));
-            date = date.minusDays(1);
-        }
-        weekWalkingPercentage.sort(Comparator.naturalOrder());
-        return weekWalkingPercentage.get(middleOfWeek);
+    public double lastWeekWalkingMedian(LocalDate date) {
+        return lastWeekMedian(date, this::dayWalkingPercentageLeft);
     }
 
-    public double lastWeekEatingPercentage(LocalDate date) {
+    public double lastWeekEatingMedian(LocalDate date) {
+        return lastWeekMedian(date, this::dayEatingPercentageLeft);
+    }
+
+    private double lastWeekMedian(LocalDate date, Function<LocalDate, Double> leftForToday) {
         final int middleOfWeek = 4;
         final int hundredPercents = 1;
         LocalDate dateWeekAgo = date.minusWeeks(1);
-        List<Double> weekWalkingPercentage = new ArrayList<>();
+        List<Double> weekPercentage = new ArrayList<>();
         while (dateWeekAgo.isBefore(date)) {
-            weekWalkingPercentage.add(hundredPercents - dayEatingPercentageLeft(date));
+            weekPercentage.add(hundredPercents - leftForToday.apply(date));
             date = date.minusDays(1);
         }
-        weekWalkingPercentage.sort(Comparator.naturalOrder());
-        return weekWalkingPercentage.get(middleOfWeek);
+        weekPercentage.sort(Comparator.naturalOrder());
+        return weekPercentage.get(middleOfWeek);
     }
 }
